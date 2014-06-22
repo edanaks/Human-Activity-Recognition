@@ -1,0 +1,110 @@
+---
+title: "Human Activity Recognition"
+output: html_document
+---
+
+<hr>
+
+### Summary
+
+In this project, our goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants
+and to predict the manner in which they did this exercise. ("classe" variable in the dataset).
+We will employ a random forest (from <code>caret</code> package), 
+with a 60-40 validation scheme. We explain our choices below.
+
+
+### Acknowledgements
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. 
+Thanks to the creators of this data for making it public.
+Discussions on this thread were very helpful in making choices:
+https://class.coursera.org/predmachlearn-002/forum/thread?thread_id=119
+Thanks to all the participants!
+
+### Loading and cleaning the data
+
+First we load the required packages and the data.
+```{r cache=TRUE}
+suppressWarnings(library(caret))
+dat <- read.csv("pml-training.csv",header=TRUE)
+```
+
+This data has lots of columns with <code>NA</code> values or blank values. 
+Let us first remove those columns. We store the smaller dataset into <code>prune</code> variable.
+The original data has <code>`r nrow(dat)`</code> rows and by trial-and-error we set the 
+threshold for <code>NA</code> values to be <code>19216</code>.
+```{r cache=TRUE}
+prune <- dat[,colSums(is.na(dat)) < 19216]
+prune <- prune[,(colSums(prune == "" | prune ==" ") < 19216)]
+```
+In this pruned dataset, it seems that the following features 
+<code>`r colnames(prune)[1:7]`</code>
+are not related to the data from accelerometers,
+so let us eliminate them.
+```{r cache=TRUE}
+prune <- prune[,-c(1,2,3,4,5,6,7)]
+```
+
+### Data slicing 
+
+We sample the data randomly without replacement and 
+with the standard 60-40 split for training and testing.
+Even with this simple cross-validation scheme we were able to predict all the 
+20 test cases given in the assignment correctly, so with stick with this choice.
+```{r cache=TRUE}
+set.seed(1)
+intrain <- createDataPartition(y=prune$classe,p=0.6,list=FALSE)
+training <- prune[intrain,]
+testing <- prune[-intrain,]
+```
+
+### Fitting a model
+
+We wish to use the random forests. However, the training data set is huge 
+and the default methods in <code>caret</code> use bootstrapping which takes a lot of time.
+We therefore tweak the training control to have an internal 4-fold cross validated scheme. 
+Data normalization is less important for our model since we are using random forests and since
+we are not using methods like PCA. Therefore, we use the data as-is.
+
+```{r cache=TRUE}
+t1 <- Sys.time()
+suppressWarnings(
+  modelFit <- train(classe~.,data=training,trControl = trainControl(method = "cv", number = 4))
+  )
+t2 <- Sys.time()
+```
+The above computation took <code>`r difftime(t2,t1)`</code> minutes on our machine.
+
+### Diagnostics, Accuracy and Cross-Validation
+
+Now that we have our model, let us find the errors associated with it.
+
+Let us make predictions on the training and testing set and store them appropriately.
+```{r cache=TRUE}
+predicttrain <- predict(modelFit,training)
+predicttest  <- predict(modelFit, testing)
+```
+
+Now we form the confusion matrices.
+```{r cache=TRUE}
+confmatTrain <- confusionMatrix(predicttrain,training$classe)
+confmatTest  <- confusionMatrix(predicttest, testing$classe )
+```
+
+We can calculate the in-sample error by looking at the confusion matrix for training set:
+```{r cache=TRUE}
+confmatTrain
+```
+Looks like we got an accuracy of <code>100%</code>. 
+
+We run a grave risk of overfitting, so let us cross validate our model on the testing set and 
+look at the out-of-sample error:
+We can find the in-sample error by looking at the confusion matrix for training set:
+```{r cache=TRUE}
+confmatTest
+```
+Therefore, our out-of-sample error is $100\times(1-\text{Accuracy})%$ on the testing set, which is 
+<code>`r 100 - 100*confmatTest$overall[[1]]`%</code>.
+
+<hr>
+
+

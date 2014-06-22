@@ -49,7 +49,7 @@ prune <- prune[,-c(1,2,3,4,5,6,7)]
 We sample the data randomly without replacement and 
 with the standard 60-40 split for training and testing.
 Even with this simple cross-validation scheme we were able to predict all the 
-20 test cases given in the assignment correctly, so with stick with this choice.
+20 test cases given in the assignment correctly, so we stick with this simplistic choice.
 ```{r cache=TRUE}
 set.seed(1)
 intrain <- createDataPartition(y=prune$classe,p=0.6,list=FALSE)
@@ -59,11 +59,11 @@ testing <- prune[-intrain,]
 
 ### Fitting a model
 
+Data normalization is less important for our model since we are using random forests and since
+we are not using methods like PCA. Therefore, we use the data as-is.
 We wish to use the random forests. However, the training data set is huge 
 and the default methods in <code>caret</code> use bootstrapping which takes a lot of time.
 We therefore tweak the training control to have an internal 4-fold cross validated scheme. 
-Data normalization is less important for our model since we are using random forests and since
-we are not using methods like PCA. Therefore, we use the data as-is.
 
 ```{r cache=TRUE}
 t1 <- Sys.time()
@@ -98,7 +98,7 @@ Looks like we got an accuracy of <code>100%</code>.
 
 We run a grave risk of overfitting, so let us cross validate our model on the testing set and 
 look at the out-of-sample error:
-We can find the in-sample error by looking at the confusion matrix for training set:
+We can find the out-of-sample error by looking at the confusion matrix for the testing set:
 ```{r cache=TRUE}
 confmatTest
 ```

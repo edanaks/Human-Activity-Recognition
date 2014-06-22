@@ -79,7 +79,7 @@ prune &lt;- prune[,(colSums(prune == &quot;&quot; | prune ==&quot; &quot;) &lt; 
 </div>
 <div id="data-slicing" class="section level3">
 <h3>Data slicing</h3>
-<p>We sample the data randomly without replacement and with the standard 60-40 split for training and testing. Even with this simple cross-validation scheme we were able to predict all the 20 test cases given in the assignment correctly, so with stick with this choice.</p>
+<p>We sample the data randomly without replacement and with the standard 60-40 split for training and testing. Even with this simple cross-validation scheme we were able to predict all the 20 test cases given in the assignment correctly, so we stick with this simplistic choice.</p>
 <pre class="r"><code>set.seed(1)
 intrain &lt;- createDataPartition(y=prune$classe,p=0.6,list=FALSE)
 training &lt;- prune[intrain,]
@@ -87,7 +87,7 @@ testing &lt;- prune[-intrain,]</code></pre>
 </div>
 <div id="fitting-a-model" class="section level3">
 <h3>Fitting a model</h3>
-<p>We wish to use the random forests. However, the training data set is huge and the default methods in <code>caret</code> use bootstrapping which takes a lot of time. We therefore tweak the training control to have an internal 4-fold cross validated scheme. Data normalization is less important for our model since we are using random forests and since we are not using methods like PCA. Therefore, we use the data as-is.</p>
+<p>Data normalization is less important for our model since we are using random forests and since we are not using methods like PCA. Therefore, we use the data as-is. We wish to use the random forests. However, the training data set is huge and the default methods in <code>caret</code> use bootstrapping which takes a lot of time. We therefore tweak the training control to have an internal 4-fold cross validated scheme.</p>
 <pre class="r"><code>t1 &lt;- Sys.time()
 suppressWarnings(
   modelFit &lt;- train(classe~.,data=training,trControl = trainControl(method = &quot;cv&quot;, number = 4))
@@ -138,7 +138,7 @@ confmatTest  &lt;- confusionMatrix(predicttest, testing$classe )</code></pre>
 ## Detection Prevalence    0.284    0.194    0.174    0.164    0.184
 ## Balanced Accuracy       1.000    1.000    1.000    1.000    1.000</code></pre>
 <p>Looks like we got an accuracy of <code>100%</code>.</p>
-<p>We run a grave risk of overfitting, so let us cross validate our model on the testing set and look at the out-of-sample error: We can find the in-sample error by looking at the confusion matrix for training set:</p>
+<p>We run a grave risk of overfitting, so let us cross validate our model on the testing set and look at the out-of-sample error: We can find the out-of-sample error by looking at the confusion matrix for the testing set:</p>
 <pre class="r"><code>confmatTest</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
